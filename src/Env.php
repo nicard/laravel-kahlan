@@ -19,7 +19,7 @@ use InvalidArgumentException;
  * 2. Add `Sofa\LaravelKahlan\Env::bootstrap($this);` to kahlan-config.php
  * 3. Create your first spec in /spec folder, eg. /spec/AppSpec.php
  *    Example spec can be found here:
- *    @link https://github.com/jarektkaczyk/kahlan-driven-laravel
+ * @link https://github.com/jarektkaczyk/kahlan-driven-laravel
  *
  * 4. Should you need to customize .env variables for the test suite, you can do it:
  *     4.1. In the `.env.kahlan` file for persistent env variables
@@ -48,9 +48,9 @@ class Env
     |--------------------------------------------------------------------------
     */
     const DATABASE_TRANSACTIONS = 'DatabaseTransactions';
-    const DATABASE_MIGRATIONS   = 'DatabaseMigrations';
-    const WITHOUT_MIDDLEWARE    = 'WithoutMiddlewares';
-    const WITHOUT_EVENTS        = 'WithoutEvents';
+    const DATABASE_MIGRATIONS = 'DatabaseMigrations';
+    const WITHOUT_MIDDLEWARE = 'WithoutMiddlewares';
+    const WITHOUT_EVENTS = 'WithoutEvents';
 
     /**
      * Start the engine and get the wheels turning.
@@ -61,7 +61,7 @@ class Env
      */
     public static function bootstrap(Kahlan $kahlan, $base_path = null)
     {
-        self::$base_path = $base_path ?: realpath(__DIR__.'/../../../../');
+        self::$base_path = $base_path ?: realpath(__DIR__ . '/../../../../');
 
         /*
         |--------------------------------------------------------------------------
@@ -102,7 +102,7 @@ class Env
             return $chain->next();
         });
 
-        require __DIR__.'/helpers.php';
+        require __DIR__ . '/helpers.php';
 
         /*
         |--------------------------------------------------------------------------
@@ -138,7 +138,7 @@ class Env
      */
     protected function bootstrapLaravel()
     {
-        $app = require self::$base_path.'/bootstrap/app.php';
+        $app = require self::$base_path . '/bootstrap/app.php';
         $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
         return $app;
     }
@@ -167,7 +167,7 @@ class Env
     {
         $befores = $afters = [];
 
-        $wrappers = (array) $wrappers;
+        $wrappers = (array)$wrappers;
 
         foreach ($wrappers as $wrapper) {
             list($before, $after) = self::$instance->functionsFor($wrapper);
@@ -212,25 +212,36 @@ class Env
         */
         switch (Str::plural(Str::studly(str_replace('.', ' ', $wrapper)))) {
             case self::DATABASE_TRANSACTIONS:
-                $before = function () {Suite::current()->laravel->make('db')->beginTransaction();};
-                $after = function () {Suite::current()->laravel->make('db')->rollBack();};
+                $before = function () {
+                    Suite::current()->laravel->make('db')->beginTransaction();
+                };
+                $after = function () {
+                    Suite::current()->laravel->make('db')->rollBack();
+                    Suite::current()->laravel->make('db')->disconnect();
+                };
                 break;
 
             case self::DATABASE_MIGRATIONS:
-                $before = function () {Suite::current()->laravel->artisan('migrate');};
-                $after = function () {Suite::current()->laravel->artisan('migrate:rollback');};
+                $before = function () {
+                    Suite::current()->laravel->artisan('migrate');
+                };
+                $after = function () {
+                    Suite::current()->laravel->artisan('migrate:rollback');
+                };
                 break;
 
             case self::WITHOUT_MIDDLEWARE:
-                $before = function () {Suite::current()->laravel->instance('middleware.disable', true);};
+                $before = function () {
+                    Suite::current()->laravel->instance('middleware.disable', true);
+                };
                 $after = null;
                 break;
 
             case self::WITHOUT_EVENTS:
                 $before = function () {
-                            $mock = Stub::create(['implements' => ['Illuminate\Contracts\Events\Dispatcher']]);
-                            Suite::current()->laravel->app->instance('events', $mock);
-                        };
+                    $mock = Stub::create(['implements' => ['Illuminate\Contracts\Events\Dispatcher']]);
+                    Suite::current()->laravel->app->instance('events', $mock);
+                };
                 $after = null;
                 break;
 
@@ -274,7 +285,7 @@ class Env
         }
 
         foreach ($env as $key => $val) {
-            putenv($key.'='.$val);
+            putenv($key . '=' . $val);
         }
     }
 }
