@@ -111,6 +111,10 @@ class Env
         */
         Filter::apply($kahlan, 'interceptor', 'laravel.env');
         Filter::apply($kahlan, 'interceptor', 'laravel.start');
+        
+        Kahlan\Matcher::register('toRaiseEvent', KahlanHelper\ToRaiseEvent::init($kahlan));
+        Kahlan\Matcher::register('toDispatchJob', KahlanHelper\ToDispatchJob::init($kahlan));
+        Kahlan\Matcher::register('toBePushedOnQueue', KahlanHelper\ToBePushedOnQueue::init($kahlan));
     }
 
     /**
