@@ -3,35 +3,89 @@
 namespace Sofa\LaravelKahlan;
 
 use PHPUnit_Framework_TestCase;
-use Illuminate\Foundation\Testing\Concerns;
+use Illuminate\Foundation\Testing\Concerns as FoundationConcerns;
+use Laravel\Lumen\Testing\Concerns as LumenConcerns;
 
 /**
  * This class is a wrapper for the Laravel's built-in testing features.
  */
 class Laravel extends PHPUnit_Framework_TestCase
 {
-    use Concerns\InteractsWithContainer,
-        Concerns\MakesHttpRequests,
-        Concerns\InteractsWithAuthentication,
-        Concerns\InteractsWithConsole,
-        Concerns\InteractsWithDatabase,
-        Concerns\InteractsWithSession,
-        Concerns\MocksApplicationServices;
+    use FoundationConcerns\InteractsWithContainer,
+        FoundationConcerns\InteractsWithAuthentication,
+        FoundationConcerns\InteractsWithConsole,
+        FoundationConcerns\InteractsWithDatabase,
+        FoundationConcerns\InteractsWithSession,
+        FoundationConcerns\MocksApplicationServices;
 
     protected $afterEachCallbacks = [];
 
     public function __call($method, $params)
     {
-        return method_exists($this, $method)
-                ? call_user_func_array([$this, $method], $params)
-                : call_user_func_array([$this->app, $method], $params);
+        $makesHttpRequests = null;
+        $self = $this;
+        if ($this->app instanceof \Laravel\Lumen\Application) {
+            $makesHttpRequests = new class($self)
+            {
+                use LumenConcerns\MakesHttpRequests;
+
+                protected $self = null;
+
+                public function __construct($self)
+                {
+                    $this->self = $self;
+                }
+
+                public function __get($name)
+                {
+                    if (property_exists($this, $name)) {
+                        return $this->{$name};
+                    } else if (property_exists($this->self, $name)) {
+                        return $this->self->{$name};
+                    } else if (property_exists($this->self->app, $name)) {
+                        return $this->self->app{$name};
+                    }
+
+                    return null;
+                }
+            };
+        } else {
+            $makesHttpRequests = new class($self)
+            {
+                use FoundationConcerns\MakesHttpRequests;
+
+                protected $self = null;
+
+                public function __construct($self)
+                {
+                    $this->self = $self;
+                }
+
+                public function __get($name)
+                {
+                    if (property_exists($this, $name)) {
+                        return $this->{$name};
+                    } else if (property_exists($this->self, $name)) {
+                        return $this->self->{$name};
+                    } else if (property_exists($this->self->app, $name)) {
+                        return $this->self->app{$name};
+                    }
+
+                    return null;
+                }
+            };
+        }
+
+        return method_exists($makesHttpRequests, $method)
+            ? call_user_func_array([$makesHttpRequests, $method], $params)
+            : call_user_func_array([$this->app, $method], $params);
     }
 
     /**
      * Make everything public because we access it from the outside.
      *
      * @param string $property
-     * @param mixed  $value
+     * @param mixed $value
      */
     public function __set($property, $value)
     {
