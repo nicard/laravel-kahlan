@@ -6,7 +6,7 @@
  * Time: 16:53
  */
 
-namespace KahlanHelper;
+namespace Sofa\LaravelKahlan;
 
 use Illuminate\Support\Facades\Queue;
 use PHPUnit_Framework_ExpectationFailedException;
