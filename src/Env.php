@@ -2,6 +2,9 @@
 
 namespace Sofa\LaravelKahlan;
 
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Kahlan\Suite;
 use Dotenv\Dotenv;
 use Kahlan\Cli\Kahlan;
@@ -111,7 +114,7 @@ class Env
         */
         Filter::apply($kahlan, 'interceptor', 'laravel.env');
         Filter::apply($kahlan, 'interceptor', 'laravel.start');
-        
+
         \Kahlan\Matcher::register('toRaiseEvent', ToRaiseEvent::init($kahlan));
         \Kahlan\Matcher::register('toDispatchJob', ToDispatchJob::init($kahlan));
         \Kahlan\Matcher::register('toBePushedOnQueue', ToBePushedOnQueue::init($kahlan));
@@ -132,6 +135,10 @@ class Env
             $context = Suite::current();
             $context->app = $laravel->app;
             $context->laravel = $laravel;
+
+            Event::fake();
+            Bus::fake();
+            Queue::fake();
         };
     }
 
@@ -221,7 +228,7 @@ class Env
                 };
                 $after = function () {
                     Suite::current()->laravel->make('db')->rollBack();
-                    Suite::current()->laravel->make('db')->disconnect();
+                    Suite::current()->laravel->make('db')->purge();
                 };
                 break;
 
