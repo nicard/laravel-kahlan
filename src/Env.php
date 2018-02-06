@@ -229,6 +229,7 @@ class Env
                 $after = function () {
                     Suite::current()->laravel->make('db')->rollBack();
                     Suite::current()->laravel->make('db')->purge();
+                    Suite::current()->laravel->make('db')->disconnect();
                 };
                 break;
 
